@@ -1,0 +1,7 @@
+{
+  "name": "FITNESS FIRST",
+  "description": "A premium, high-conversion gym and fitness website designed to transform lives and build a powerful fitness brand.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

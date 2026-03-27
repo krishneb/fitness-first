@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: leads
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required) - Full name of the lead
+    //   - email: string (required, email format) - Email of the lead
+    //   - subject: string (required) - Subject of inquiry
+    //   - message: string (required, max 1000 chars) - Message content
+    //   - createdAt: timestamp (required) - Time of submission
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "krishnendubasak1144@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidLead(data) {
+      return hasRequiredFields(['name', 'email', 'subject', 'message', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'email', 'subject', 'message', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.subject is string && data.subject.size() > 0 &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 1000 &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /leads/{leadId} {
+      // Anyone can submit a lead (create)
+      allow create: if isValidLead(request.resource.data);
+      
+      // Only admins can read or manage leads
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

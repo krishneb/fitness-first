@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "A potential member inquiry from the contact form.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The full name of the lead."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address of the lead."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject of the inquiry."
+        },
+        "message": {
+          "type": "string",
+          "description": "The message from the lead."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the lead was created."
+        }
+      },
+      "required": ["name", "email", "subject", "message", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Collection of gym inquiries."
+    }
+  }
+}
